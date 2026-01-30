@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../core/api_client.dart';
+
 
 class Message {
   final String text;
@@ -50,7 +52,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   Future<String> _fetchAIResponse(String userMessage) async {
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/chat'),
+        Uri.parse("$ApiClient.baseUrl/chat"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'message': userMessage}),
       ).timeout(

@@ -19,12 +19,15 @@ def save_checkin(user_id: str, data: dict):
     New day = new document.
     """
 
-    date_id = data["date"]
+    today=datetime.now(timezone.utc).date().isoformat()
+    
+    data["created_at"]=datetime.now(timezone.utc)
+    data["date"]=today
 
     db.collection("users") \
       .document(user_id) \
       .collection("checkins") \
-      .document(date_id) \
+      .document(today) \
       .set(data)
 
 def get_last_n_checkins(user_id: str, n: int):

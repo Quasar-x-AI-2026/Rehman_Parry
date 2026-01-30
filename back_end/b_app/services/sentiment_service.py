@@ -1,23 +1,43 @@
-from transformers import pipeline
 import os
+import torch
+import torch.nn.functional as F
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-# --- Hugging Face hard disable network & extras ---
+# --------------------------------------------------
+# 🔒 Hugging Face OFFLINE + QUIET MODE
+# (safe AFTER model has been cached once)
+# --------------------------------------------------
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["HF_HUB_DISABLE_AUTO_CONVERSION"] = "1"
 os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
 
+# --------------------------------------------------
+# 🧠 MODEL SETUP (REAL TRANSFORMERS USAGE)
+# --------------------------------------------------
+MODEL_NAME = "j-hartmann/emotion-english-distilroberta-base"
 
-emotion_pipeline = pipeline(
-    "text-classification",
-    model="j-hartmann/emotion-english-distilroberta-base",
-    return_all_scores=True
-)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+model.eval()
 
-def analyze_emotion(text: str):
+# Model label order (fixed for this model)
+LABELS = ["anger", "disgust", "fear", "joy", "neutral", "sadness"]
+
+# --------------------------------------------------
+# 🔍 EMOTION ANALYSIS FUNCTION
+# --------------------------------------------------
+def analyze_emotion(text: str) -> dict:
+    """
+    Returns a normalized emotion distribution:
+    sadness, fear, anger, joy, neutral
+    """
+    print("🔥 analyze_emotion CALLED with:", repr(text))
+
     # Fallback for empty input
     if not text or text.strip() == "":
         return {
@@ -28,36 +48,40 @@ def analyze_emotion(text: str):
             "neutral": 1.0
         }
 
-    raw_output = emotion_pipeline(text)
+    # Tokenize input
+    inputs = tokenizer(
+        text,
+        return_tensors="pt",
+        truncation=True,
+        padding=True
+    )
 
-    # Normalize output shape
-    if isinstance(raw_output[0], list):
-        results = raw_output[0]
-    else:
-        results = raw_output
+    # Run model
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits[0]
 
-    # Initialize all required emotions
-    emotion_scores = {
-        "sadness": 0.0,
-        "fear": 0.0,
-        "anger": 0.0,
-        "joy": 0.0,
-        "neutral": 0.0
-    }
+    # Convert logits → probabilities
+    probs = F.softmax(logits, dim=-1).tolist()
 
-    for item in results:
-        label = item["label"].lower()
-        score = round(item["score"], 3)
+    # Map labels → probabilities
+    raw_emotions = dict(zip(LABELS, probs))
 
-        if label == "surprise":
-            continue
+    # Remove unwanted emotion
+    raw_emotions.pop("disgust", None)
 
-        if label in emotion_scores:
-            emotion_scores[label] = score
+    # Normalize again after removal
+    total = sum(raw_emotions.values())
+    if total > 0:
+        for k in raw_emotions:
+            raw_emotions[k] = round(raw_emotions[k] / total, 3)
 
-    return emotion_scores
+    return raw_emotions
 
 
+# --------------------------------------------------
+# 🧪 LOCAL TESTING
+# --------------------------------------------------
 if __name__ == "__main__":
     tests = [
         "I am tired all the time, but I’m still pushing myself to get things done.",
@@ -69,6 +93,6 @@ if __name__ == "__main__":
 
     for t in tests:
         print("\nTEXT:", repr(t))
-        print("EMOTION:", analyze_emotion(t))
-        print("SUM:", round(sum(analyze_emotion(t).values()), 3))
-
+        result = analyze_emotion(t)
+        print("EMOTION:", result)
+        print("SUM:", round(sum(result.values()), 3))

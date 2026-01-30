@@ -48,6 +48,7 @@ class _DailyCheckInPageState extends State<DailyCheckInPage> {
         mood: _selectedMood.toString(),
         workload: _workload,
         sleepHours: _sleepHours,
+        note: _noteController.text.trim(),
       );
 
       if (!mounted) return;
