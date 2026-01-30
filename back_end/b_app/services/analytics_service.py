@@ -1,22 +1,31 @@
 from statistics import mean
 
-def analyze_checkins(checkins):
-    if not checkins:
-        return {}
+def analyze_checkins(checkins: list[dict]):
+    """
+    Layer 1 analytics:
+    - Uses last 7 daily check-ins
+    - Assumes stress & energy scale: 1–5
+    - checkins MUST be ordered oldest → newest
+    """
 
-    stress = [c["stress"] for c in checkins]
-    energy = [c["energy"] for c in checkins]
+    if not checkins:
+        return {"status": "no_data"}
+
+    stress = [c["stress"] for c in checkins if "stress" in c]
+    energy = [c["energy"] for c in checkins if "energy" in c]
 
     avg_stress_7d = round(mean(stress), 1)
     avg_energy_7d = round(mean(energy), 1)
 
+    # Consecutive high-stress days (from latest backwards)
     consecutive_high = 0
     for c in reversed(checkins):
-        if c["stress"] >= 70:
+        if c.get("stress", 0) >= 4:
             consecutive_high += 1
         else:
             break
 
+    # Stress trend (compare recent 3 vs previous 3)
     trend = "stable"
     if len(stress) >= 6:
         recent = mean(stress[-3:])
@@ -27,9 +36,10 @@ def analyze_checkins(checkins):
             trend = "decreasing"
 
     return {
+        "days_tracked": len(checkins),
         "avg_stress_7d": avg_stress_7d,
         "avg_energy_7d": avg_energy_7d,
         "stress_trend": trend,
         "consecutive_high_stress_days": consecutive_high,
-        "low_energy_flag": avg_energy_7d < 45
+        "low_energy_flag": avg_energy_7d <= 2.5
     }

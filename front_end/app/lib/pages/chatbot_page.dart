@@ -292,13 +292,13 @@ class _TypingIndicator extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.shade300),
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             _TypingDot(delay: 0),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             _TypingDot(delay: 200),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             _TypingDot(delay: 400),
           ],
         ),
