@@ -43,3 +43,28 @@ def analyze_checkins(checkins: list[dict]):
         "consecutive_high_stress_days": consecutive_high,
         "low_energy_flag": avg_energy_7d <= 2.5
     }
+
+def build_risk_explanation(analytics: dict) -> str:
+    if analytics["consecutive_high_stress_days"] >= 3:
+        return (
+            f"Your stress levels have been elevated for "
+            f"{analytics['consecutive_high_stress_days']} consecutive days. "
+            "This suggests increased pressure that could lead to burnout if sustained."
+        )
+
+    if analytics["low_energy_flag"]:
+        return (
+            "Your recent energy levels have been consistently low, "
+            "which may indicate insufficient recovery."
+        )
+
+    if analytics["stress_trend"] == "increasing":
+        return (
+            "Your stress levels have been increasing compared to previous days. "
+            "Monitoring your workload and rest is recommended."
+        )
+
+    return "Your recent stress and energy levels appear manageable."
+
+def extract_stress_series(checkins: list) -> list:
+    return [c.get("stress", 0) for c in checkins]

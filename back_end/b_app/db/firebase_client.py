@@ -3,8 +3,11 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+KEY_PATH = os.path.join(BASE_DIR, "firebase_key.json")
+
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
+    cred = credentials.Certificate(KEY_PATH)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -16,15 +19,12 @@ def save_checkin(user_id: str, data: dict):
     New day = new document.
     """
 
-    today = datetime.now(timezone.utc).date().isoformat()  # "2026-01-30"
-
-    data["created_at"] = datetime.utcnow()
-    data["date"] = today  # optional but useful
+    date_id = data["date"]
 
     db.collection("users") \
       .document(user_id) \
       .collection("checkins") \
-      .document(today) \
+      .document(date_id) \
       .set(data)
 
 def get_last_n_checkins(user_id: str, n: int):

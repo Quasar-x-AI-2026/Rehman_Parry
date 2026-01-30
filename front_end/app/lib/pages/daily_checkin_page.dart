@@ -41,59 +41,58 @@ class _DailyCheckInPageState extends State<DailyCheckInPage> {
   }
 
   Future<void> _submitCheckIn() async {
-  try {
-    final success = await ApiClient.submitCheckin(
-      stress: _stressLevel.round(),
-      energy: _energyLevel.round(),
-      mood: _selectedMood.toString(),
-      workload: _workload,
-      sleepHours: _sleepHours,
-    );
+    try {
+      final success = await ApiClient.submitCheckin(
+        stress: _stressLevel.round(),
+        energy: _energyLevel.round(),
+        mood: _selectedMood.toString(),
+        workload: _workload,
+        sleepHours: _sleepHours,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (success) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Color(0xFF81B29A), size: 28),
-              SizedBox(width: 12),
-              Text('Check-In Complete!'),
+      if (success) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Color(0xFF81B29A), size: 28),
+                SizedBox(width: 12),
+                Text('Check-In Complete!'),
+              ],
+            ),
+            content: const Text(
+              'Your wellness data has been recorded.',
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Done'),
+              ),
             ],
           ),
-          content: const Text(
-            'Your wellness data has been recorded.',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
-            ),
-          ],
-        ),
-      );
-    } else {
+        );
+      } else {
+        _showError();
+      }
+    } catch (e) {
       _showError();
     }
-  } catch (e) {
-    _showError();
   }
-}
 
-void _showError() {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Failed to save check-in. Try again.'),
-      backgroundColor: Colors.redAccent,
-    ),
-  );
-}
-
-
+  void _showError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to save check-in. Try again.'),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -402,8 +401,8 @@ void _showError() {
                     Slider(
                       value: _energyLevel,
                       min: 1,
-                      max: 5,
-                      divisions: 4,
+                      max: 10,
+                      divisions: 9,
                       label: _energyLevel.round().toString(),
                       onChanged: (value) {
                         setState(() {
@@ -472,7 +471,7 @@ void _showError() {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Add a note (optional)',
+                      'Add a note (helps us understand your mood)',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -483,7 +482,8 @@ void _showError() {
                       controller: _noteController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'How are you really feeling?',
+                        hintText:
+                            'Share anything that affected your mood today (optional)',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
