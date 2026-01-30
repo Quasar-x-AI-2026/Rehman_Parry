@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from b_app.db.firebase_client import db
 from datetime import datetime
+from b_app.db.firebase_client import db
 
 router = APIRouter()
 
@@ -24,4 +24,7 @@ def submit_checkin(data: dict):
       .document(date_id) \
       .set(payload)
 
-    return {"status": "saved", "date": date_id}
+    return {
+        "status": "success",
+        "date": date_id
+    }
