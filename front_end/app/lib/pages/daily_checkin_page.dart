@@ -1,3 +1,4 @@
+import '../core/api_client.dart';
 import 'package:flutter/material.dart';
 
 class DailyCheckInPage extends StatefulWidget {
@@ -39,32 +40,60 @@ class _DailyCheckInPageState extends State<DailyCheckInPage> {
     super.dispose();
   }
 
-  void _submitCheckIn() {
-    // Show success dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF81B29A), size: 28),
-            SizedBox(width: 12),
-            Text('Check-In Complete!'),
+  Future<void> _submitCheckIn() async {
+  try {
+    final success = await ApiClient.submitCheckin(
+      stress: _stressLevel.round(),
+      energy: _energyLevel.round(),
+      mood: _selectedMood.toString(),
+      workload: _workload,
+      sleepHours: _sleepHours,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Color(0xFF81B29A), size: 28),
+              SizedBox(width: 12),
+              Text('Check-In Complete!'),
+            ],
+          ),
+          content: const Text(
+            'Your wellness data has been recorded.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
           ],
         ),
-        content: const Text(
-          'Your wellness data has been recorded. Keep up the great work!',
-          style: TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
+      );
+    } else {
+      _showError();
+    }
+  } catch (e) {
+    _showError();
   }
+}
+
+void _showError() {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Failed to save check-in. Try again.'),
+      backgroundColor: Colors.redAccent,
+    ),
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
