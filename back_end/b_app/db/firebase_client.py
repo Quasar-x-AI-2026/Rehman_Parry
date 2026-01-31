@@ -42,3 +42,20 @@ def get_last_n_checkins(user_id: str, n: int):
     # oldest → newest
     return list(reversed([doc.to_dict() for doc in ref.stream()]))
 
+def get_checkins_in_range(user_id: str, start: date, end: date):
+    """
+    Fetch check-ins between start and end dates (inclusive)
+    """
+    start_str = start.isoformat()
+    end_str = end.isoformat()
+
+    ref = (
+        db.collection("users")
+          .document(user_id)
+          .collection("checkins")
+          .where("date", ">=", start_str)
+          .where("date", "<=", end_str)
+          .order_by("date")
+    )
+
+    return [doc.to_dict() for doc in ref.stream()]

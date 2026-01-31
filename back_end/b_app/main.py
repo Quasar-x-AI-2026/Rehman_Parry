@@ -24,19 +24,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/test-gemini")
-def test_gemini():
-    try:
-        r = model.generate_content("Say hello in one word")
-        return {"reply": r.text}
-    except Exception as e:
-        print("Gemini error:", e)
-        raise HTTPException(status_code=500, detail="Gemini failed")
-
 
 app.include_router(checkin.router)
 app.include_router(risk.router)
-
 class ChatRequest(BaseModel):
     message: str
 

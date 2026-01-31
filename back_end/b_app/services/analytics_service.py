@@ -68,3 +68,23 @@ def build_risk_explanation(analytics: dict) -> str:
 
 def extract_stress_series(checkins: list) -> list:
     return [c.get("stress", 0) for c in checkins]
+
+def smooth_burnout_score(checkins: list) -> float:
+    """
+    Uses recent burnout scores to stabilize risk
+    """
+    scores = [
+        c["burnout"]["score"]
+        for c in checkins
+        if "burnout" in c
+    ]
+
+    if not scores:
+        return 0.0
+
+    # Weighted average (recent days matter more)
+    weights = list(range(1, len(scores) + 1))
+    weighted_sum = sum(s * w for s, w in zip(scores, weights))
+    total_weight = sum(weights)
+
+    return round(weighted_sum / total_weight, 3)

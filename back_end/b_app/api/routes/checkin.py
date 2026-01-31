@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from datetime import datetime
 from b_app.db.firebase_client import save_checkin
-from b_app.services.burnout_service import burnout_from_emotion, burnout_risk
+from b_app.services.burnout_service import burnout_score, burnout_risk
+
 from b_app.services.sentiment_service import analyze_emotion
 from pydantic import BaseModel
 import os
@@ -42,17 +43,25 @@ def submit_checkin(payload: CheckinPayload):
         }
         payload.pop("note", None)  # ⛔ remove empty note
 
-    burnout_score = burnout_from_emotion(emotion)
-    burnout_level = burnout_risk(burnout_score)
+    burnout_score_value = burnout_score(
+        emotion=emotion,
+        energy=payload["energy"],
+        sleep_hours=payload["sleep_hours"],
+        stress=payload["stress"],
+        workload=payload["workload"],
+    )
+    burnout_level = burnout_risk(burnout_score_value)
+
 
     now = datetime.utcnow()
 
     enriched_payload = {
         "burnout": {
-            "method": "rule_based_v1",
+            "method": "rule_based_v2",
             "risk": burnout_level,
-            "score": burnout_score
-        },
+            "score": burnout_score_value
+        }
+,
         "emotion": emotion,
         "energy": payload["energy"],
         "stress": payload["stress"],

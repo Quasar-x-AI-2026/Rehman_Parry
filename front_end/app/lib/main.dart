@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import '../pages/daily_checkin_page.dart';
 import '../pages/chatbot_page.dart';
 import '../pages/risk_monitoring_page.dart';
+
 import '../pages/wellness_dashboard_page.dart';
 
 void main() {
   runApp(const CalmCompassApp());
 }
+final GlobalKey<NavigatorState> navigatorKey =
+    GlobalKey<NavigatorState>();
+
 
 class CalmCompassApp extends StatelessWidget {
   const CalmCompassApp({super.key});

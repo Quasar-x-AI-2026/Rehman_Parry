@@ -7,24 +7,32 @@ class RiskMonitoringPage extends StatefulWidget {
   const RiskMonitoringPage({super.key});
 
   @override
-  State<RiskMonitoringPage> createState() => _RiskMonitoringPageState();
+  State<RiskMonitoringPage> createState() => RiskMonitoringPageState();
 }
 
-class _RiskMonitoringPageState extends State<RiskMonitoringPage> {
-  late Future<Map<String, dynamic>> riskFuture;
-
+class RiskMonitoringPageState extends State<RiskMonitoringPage> {
+  Future<Map<String, dynamic>>? riskFuture;
+  
   @override
   void initState() {
     super.initState();
-    riskFuture = fetchRisk();
+    refreshRisk();
   }
-
+  void refreshRisk() {
+    setState(() {
+      riskFuture = fetchRisk();
+    });
+  }
+static const String baseUrl = "http://10.0.0.185:8000";
   // 🔗 API CALL
-  Future<Map<String, dynamic>> fetchRisk() async {
-    final response = await http.get(
-      Uri.parse("http://localhost:8000/risk"),
-      // Android emulator: http://10.0.2.2:8000/risk
-    );
+    Future<Map<String, dynamic>> fetchRisk() async {
+    final url = Uri.parse("$baseUrl/risk");
+    debugPrint("📡 FETCH RISK => $url");
+
+    final response = await http.get(url);
+
+    debugPrint("📥 STATUS => ${response.statusCode}");
+    debugPrint("📥 BODY => ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception("Failed to load risk data");
@@ -40,22 +48,41 @@ class _RiskMonitoringPageState extends State<RiskMonitoringPage> {
         title: const Text("Risk Monitoring"),
         centerTitle: true,
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: riskFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text("Failed to load risk data"),
-            );
-          }
-
-          final data = snapshot.data!;
-          return _buildContent(context, data);
+      body: RefreshIndicator(
+        onRefresh: () async {
+          refreshRisk();
         },
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: riskFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text("Failed to load risk data"),
+              );
+            }
+
+            final data = snapshot.data!;
+
+            // 🛑 Handle no-data state safely
+            if (data["current"] == null) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    "Not enough check-ins yet.\nCheck in for a few days to see your burnout risk.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              );
+            }
+            return _buildContent(context, data);
+          },
+        ),
       ),
     );
   }

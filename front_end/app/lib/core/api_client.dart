@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 class ApiClient {
   static const String baseUrl = "http://10.0.0.185:8000";
@@ -12,8 +13,10 @@ class ApiClient {
     required double sleepHours,
     required String note,
   }) async {
-    
     final url = Uri.parse("$baseUrl/checkin");
+
+    debugPrint("📡 CHECKIN URL => $url");
+    debugPrint("📝 NOTE SENT => '$note'");
 
     final response = await http.post(
       url,
@@ -29,6 +32,9 @@ class ApiClient {
         "note": note,
       }),
     );
+
+    debugPrint("📥 STATUS => ${response.statusCode}");
+    debugPrint("📥 BODY => ${response.body}");
 
     return response.statusCode == 200;
   }

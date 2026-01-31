@@ -72,8 +72,10 @@ class _DailyCheckInPageState extends State<DailyCheckInPage> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
+                onPressed: () {
+                  Navigator.pop(context, true); // go back + tell "data changed"
+            },
+              child: const Text('Done'),
               ),
             ],
           ),
@@ -133,6 +135,7 @@ class _DailyCheckInPageState extends State<DailyCheckInPage> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
+    
                       child: const Text('Got it'),
                     ),
                   ],
